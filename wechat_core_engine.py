@@ -14,7 +14,40 @@ import win32gui
 import win32con
 import win32process
 import os
+import sys
 from PIL import Image
+import cv2
+
+# 获取资源文件路径的函数
+def get_resource_path(relative_path):
+    """获取资源文件的绝对路径，兼容开发环境和打包后的exe环境"""
+    try:
+        # PyInstaller打包后的临时目录
+        base_path = sys._MEIPASS
+    except AttributeError:
+        # 开发环境，使用当前脚本所在目录
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    
+    full_path = os.path.join(base_path, relative_path)
+    # 确保路径使用正确的分隔符
+    full_path = os.path.normpath(full_path)
+    return full_path
+
+def load_image_with_chinese_path(image_path):
+    """加载包含中文路径的图像文件，解决中文路径问题"""
+    try:
+        # 直接使用PIL Image打开图像文件
+        pil_image = Image.open(image_path)
+        
+        # 确保图像是RGB模式
+        if pil_image.mode != 'RGB':
+            pil_image = pil_image.convert('RGB')
+        
+        return pil_image
+        
+    except Exception as e:
+        print(f"❌ 加载图像文件失败: {image_path}, 错误: {e}")
+        return None
 
 # 导入微信启动器
 try:
@@ -1394,7 +1427,19 @@ def find_and_click_pengyouquan(stop_flag_func=None):
     
     try:
         # 尝试使用图像识别找到朋友圈图标
-        pengyouquan_icon = pyautogui.locateOnScreen('assets/pengyouquan.png', confidence=0.8)
+        pengyouquan_icon_path = get_resource_path('assets/pengyouquan.png')
+        print(f"🔍 查找朋友圈图标路径: {pengyouquan_icon_path}")
+        if os.path.exists(pengyouquan_icon_path):
+            # 使用新的图像加载函数处理中文路径
+            pengyouquan_image = load_image_with_chinese_path(pengyouquan_icon_path)
+            if pengyouquan_image:
+                pengyouquan_icon = pyautogui.locateOnScreen(pengyouquan_image, confidence=0.8)
+            else:
+                print(f"❌ 无法加载朋友圈图标: {pengyouquan_icon_path}")
+                pengyouquan_icon = None
+        else:
+            print(f"⚠️ 朋友圈图标文件不存在: {pengyouquan_icon_path}")
+            pengyouquan_icon = None
         if pengyouquan_icon:
             # 检查停止标志
             if stop_flag_func and stop_flag_func():
@@ -1447,7 +1492,12 @@ def check_and_perform_dianzan(dianzan_position, enable_comment=False, comment_te
         # 检测已点赞状态 (yizan.png)
         print("🔍 正在识别已点赞状态图标 (yizan.png)...")
         try:
-            yizan_icon = pyautogui.locateOnScreen('assets/yizan.png', confidence=0.8)
+            yizan_icon_path = get_resource_path('assets/yizan.png')
+            if os.path.exists(yizan_icon_path):
+                yizan_image = load_image_with_chinese_path(yizan_icon_path)
+                yizan_icon = pyautogui.locateOnScreen(yizan_image, confidence=0.8) if yizan_image else None
+            else:
+                yizan_icon = None
             if yizan_icon:
                 print(f"✅ 检测到已点赞状态，位置: {yizan_icon}，无需重复点赞")
                 
@@ -1470,7 +1520,12 @@ def check_and_perform_dianzan(dianzan_position, enable_comment=False, comment_te
         # 检测未点赞状态 (nozan.png)
         print("🔍 正在识别未点赞状态图标 (nozan.png)...")
         try:
-            nozan_icon = pyautogui.locateOnScreen('assets/nozan.png', confidence=0.8)
+            nozan_icon_path = get_resource_path('assets/nozan.png')
+            if os.path.exists(nozan_icon_path):
+                nozan_image = load_image_with_chinese_path(nozan_icon_path)
+                nozan_icon = pyautogui.locateOnScreen(nozan_image, confidence=0.8) if nozan_image else None
+            else:
+                nozan_icon = None
             if nozan_icon:
                 print(f"✅ 检测到未点赞状态，位置: {nozan_icon}，执行点赞操作")
                 # 点击点赞图标进行点赞
@@ -1498,7 +1553,12 @@ def check_and_perform_dianzan(dianzan_position, enable_comment=False, comment_te
         # 在弹出界面中查找可能的点赞按钮
         try:
             # 尝试查找并点击点赞相关的图标
-            dianzan_in_popup = pyautogui.locateOnScreen('assets/dianzan.png', confidence=0.7)
+            dianzan_in_popup_path = get_resource_path('assets/dianzan.png')
+            if os.path.exists(dianzan_in_popup_path):
+                dianzan_image = load_image_with_chinese_path(dianzan_in_popup_path)
+                dianzan_in_popup = pyautogui.locateOnScreen(dianzan_image, confidence=0.7) if dianzan_image else None
+            else:
+                dianzan_in_popup = None
             if dianzan_in_popup:
                 pyautogui.click(dianzan_in_popup)
                 time.sleep(1)
@@ -1565,7 +1625,12 @@ def perform_comment_action(comment_text, dianzan_position=None, stop_flag_func=N
         else:
             print("⚠️ 未提供点赞按钮位置，尝试查找点赞图标...")
             try:
-                dianzan_icon = pyautogui.locateOnScreen('assets/dianzan.png', confidence=0.8)
+                dianzan_icon_path = get_resource_path('assets/dianzan.png')
+                if os.path.exists(dianzan_icon_path):
+                    dianzan_image = load_image_with_chinese_path(dianzan_icon_path)
+                    dianzan_icon = pyautogui.locateOnScreen(dianzan_image, confidence=0.8) if dianzan_image else None
+                else:
+                    dianzan_icon = None
                 if dianzan_icon:
                     print(f"✅ 找到点赞图标，位置: {dianzan_icon}")
                     pyautogui.click(dianzan_icon)
@@ -1579,7 +1644,12 @@ def perform_comment_action(comment_text, dianzan_position=None, stop_flag_func=N
         # 查找评论图标
         print("🔍 正在查找评论图标 (pinglun.png)...")
         try:
-            pinglun_icon = pyautogui.locateOnScreen('assets/pinglun.png', confidence=0.8)
+            pinglun_icon_path = get_resource_path('assets/pinglun.png')
+            if os.path.exists(pinglun_icon_path):
+                pinglun_image = load_image_with_chinese_path(pinglun_icon_path)
+                pinglun_icon = pyautogui.locateOnScreen(pinglun_image, confidence=0.8) if pinglun_image else None
+            else:
+                pinglun_icon = None
             if pinglun_icon:
                 print(f"✅ 找到评论图标，位置: {pinglun_icon}")
                 # 点击评论图标
@@ -1621,7 +1691,12 @@ def perform_comment_action(comment_text, dianzan_position=None, stop_flag_func=N
                 for confidence in confidence_levels:
                     try:
                         print(f"🔍 尝试置信度 {confidence} 查找发送按钮...")
-                        fasong_icon = pyautogui.locateOnScreen('assets/fasong.png', confidence=confidence)
+                        fasong_icon_path = get_resource_path('assets/fasong.png')
+                        if os.path.exists(fasong_icon_path):
+                            fasong_image = load_image_with_chinese_path(fasong_icon_path)
+                            fasong_icon = pyautogui.locateOnScreen(fasong_image, confidence=confidence) if fasong_image else None
+                        else:
+                            fasong_icon = None
                         if fasong_icon:
                             print(f"✅ 找到发送按钮，位置: {fasong_icon} (置信度: {confidence})")
                             pyautogui.click(fasong_icon)
@@ -1666,7 +1741,8 @@ def find_and_click_dianzan(target_name, name_position=None, max_scroll_attempts=
             return None
             
         # 使用图像识别找到点赞图标
-        dianzan_icons = list(pyautogui.locateAllOnScreen('assets/dianzan.png', confidence=0.8))
+        dianzan_icon_path = get_resource_path('assets/dianzan.png')
+        dianzan_icons = list(pyautogui.locateAllOnScreen(dianzan_icon_path, confidence=0.8)) if os.path.exists(dianzan_icon_path) else []
         if dianzan_icons:
             # 找到用户名下方最近的点赞按钮
             name_x, name_y = current_name_position
@@ -1770,11 +1846,73 @@ def find_and_click_dianzan(target_name, name_position=None, max_scroll_attempts=
         print(f"❌ 查找点赞按钮失败: {e}")
         return False
 
-def get_pengyouquan_window_region(stop_flag_func=None):
+def adjust_pengyouquan_window_size(hwnd, stop_flag_func=None):
+    """调整朋友圈窗口大小，使其高度适应屏幕并进行拉伸
+    
+    Args:
+        hwnd: 朋友圈窗口句柄
+        stop_flag_func: 停止标志检查函数
+    """
+    try:
+        # 检查停止标志
+        if stop_flag_func and stop_flag_func():
+            print("⏹️ 调整朋友圈窗口大小操作被停止")
+            return False
+            
+        # 获取屏幕尺寸
+        screen_width, screen_height = pyautogui.size()
+        print(f"📐 屏幕尺寸: {screen_width}x{screen_height}")
+        
+        # 获取当前窗口位置和大小
+        current_rect = win32gui.GetWindowRect(hwnd)
+        current_left, current_top, current_right, current_bottom = current_rect
+        current_width = current_right - current_left
+        current_height = current_bottom - current_top
+        print(f"📐 当前朋友圈窗口: 位置({current_left}, {current_top}) 尺寸({current_width}x{current_height})")
+        
+        # 计算新的窗口尺寸和位置
+        # 保持窗口宽度不变，但调整高度为屏幕高度的100%
+        new_height = int(screen_height * 1)
+        new_width = current_width  # 保持原宽度
+        
+        # 窗口靠左显示
+        new_left = 0  # 靠左边显示
+        new_top = 0   # 靠顶部显示
+        
+        print(f"📐 调整后朋友圈窗口: 位置({new_left}, {new_top}) 尺寸({new_width}x{new_height})")
+        
+        # 调整窗口大小和位置
+        win32gui.SetWindowPos(
+            hwnd,
+            win32con.HWND_TOP,  # 置于顶层
+            new_left, new_top,  # 新位置
+            new_width, new_height,  # 新尺寸
+            win32con.SWP_SHOWWINDOW  # 显示窗口
+        )
+        
+        # 等待窗口调整完成
+        time.sleep(0.5)
+        
+        # 验证调整结果
+        adjusted_rect = win32gui.GetWindowRect(hwnd)
+        adjusted_left, adjusted_top, adjusted_right, adjusted_bottom = adjusted_rect
+        adjusted_width = adjusted_right - adjusted_left
+        adjusted_height = adjusted_bottom - adjusted_top
+        
+        print(f"✅ 朋友圈窗口已调整: 位置({adjusted_left}, {adjusted_top}) 尺寸({adjusted_width}x{adjusted_height})")
+        return True
+        
+    except Exception as e:
+        print(f"❌ 调整朋友圈窗口大小失败: {e}")
+        return False
+
+
+def get_pengyouquan_window_region(stop_flag_func=None, enable_window_resize=True):
     """获取朋友圈窗口的区域坐标 - 使用健壮的窗口查找机制
     
     Args:
         stop_flag_func: 停止标志检查函数
+        enable_window_resize: 是否启用窗口大小调整
     """
     try:
         def find_pengyouquan_window():
@@ -1828,7 +1966,14 @@ def get_pengyouquan_window_region(stop_flag_func=None):
                         win32gui.SetForegroundWindow(hwnd)
                         time.sleep(0.5)
                         
-                        # 获取窗口区域
+                        # 根据用户设置决定是否调整朋友圈窗口大小
+                        if enable_window_resize:
+                            print("📏 正在调整朋友圈窗口大小...")
+                            adjust_pengyouquan_window_size(hwnd, stop_flag_func)
+                        else:
+                            print("📏 跳过朋友圈窗口大小调整（用户已禁用）")
+                        
+                        # 获取调整后的窗口区域
                         rect = win32gui.GetWindowRect(hwnd)
                         left, top, right, bottom = rect
                         
@@ -2678,8 +2823,14 @@ def pengyouquan_multi_dianzan_action(target_names, wait_seconds=0, status_callba
     
     return result
 
-def find_and_click_pengyouquan_with_dianzan(target_name=None, stop_flag_func=None):
-    """完整的朋友圈功能：打开朋友圈并查找指定用户点赞"""
+def find_and_click_pengyouquan_with_dianzan(target_name=None, stop_flag_func=None, enable_window_resize=True):
+    """完整的朋友圈功能：打开朋友圈并查找指定用户点赞
+    
+    Args:
+        target_name: 目标用户名
+        stop_flag_func: 停止标志检查函数
+        enable_window_resize: 是否启用窗口大小调整
+    """
     print("👥💖 开始执行朋友圈完整功能...")
     
     # 将微信窗口置于最前
