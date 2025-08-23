@@ -52,7 +52,7 @@ try:
     from wechat_core_engine import (
         search_contact, search_group, find_and_click_pengyouquan_with_dianzan,
         ensure_wechat_is_active, pengyouquan_dianzan_action, pengyouquan_multi_dianzan_action,
-        find_and_click_pengyouquan
+        find_and_click_pengyouquan, adjust_pengyouquan_window_size
     )
     print("✅ GUI环境：微信核心引擎已加载")
 except ImportError as e:
@@ -80,6 +80,9 @@ except ImportError as e:
     def pengyouquan_multi_dianzan_action(*args, **kwargs):
         return False
     def find_and_click_pengyouquan(*args, **kwargs):
+        return False
+    
+    def adjust_pengyouquan_window_size(*args, **kwargs):
         return False
 
 
@@ -309,9 +312,23 @@ class WeChatAutomationGUI(QMainWindow):
         
         # 设置应用程序图标（如果有的话）
         try:
-            self.setWindowIcon(QIcon("assets/pengyouquan.png"))
-        except:
-            pass
+            import sys
+            import os
+            # 获取资源文件路径的函数
+            def get_resource_path(relative_path):
+                try:
+                    # PyInstaller打包后的临时目录
+                    base_path = sys._MEIPASS
+                except AttributeError:
+                    # 开发环境，使用当前脚本所在目录
+                    base_path = os.path.dirname(os.path.abspath(__file__))
+                return os.path.join(base_path, relative_path)
+            
+            icon_path = get_resource_path("assets/pengyouquan.png")
+            if os.path.exists(icon_path):
+                self.setWindowIcon(QIcon(icon_path))
+        except Exception as e:
+            print(f"设置窗口图标失败: {e}")
         
         # 设置主题样式
         self.setStyleSheet("""
@@ -906,10 +923,55 @@ class WeChatAutomationGUI(QMainWindow):
         checkbox_layout = QHBoxLayout()
         self.enable_comment_checkbox = QCheckBox("启用或关闭")
         self.enable_comment_checkbox.setFont(QFont("Microsoft YaHei", 10))
-        self.enable_comment_checkbox.setStyleSheet("""
-            QCheckBox {
+        # 动态生成样式表，处理资源文件路径
+        try:
+            import sys
+            import os
+            # 获取资源文件路径的函数
+            def get_resource_path(relative_path):
+                try:
+                    # PyInstaller打包后的临时目录
+                    base_path = sys._MEIPASS
+                except AttributeError:
+                    # 开发环境，使用当前脚本所在目录
+                    base_path = os.path.dirname(os.path.abspath(__file__))
+                return os.path.join(base_path, relative_path)
+            
+            checkmark_path = get_resource_path("assets/checkmark.svg")
+            # 将路径转换为URL格式，处理Windows路径分隔符
+            checkmark_url = checkmark_path.replace("\\", "/")
+            
+            checkbox_style = f"""
+            QCheckBox {{
+                font-size: 14px;
+                color: #333;
                 spacing: 8px;
-                color: #333333;
+            }}
+            QCheckBox::indicator {{
+                width: 18px;
+                height: 18px;
+                border: 2px solid #e0e0e0;
+                border-radius: 3px;
+                background-color: white;
+            }}
+            QCheckBox::indicator:checked {{
+                background-color: #4CAF50;
+                border-color: #4CAF50;
+                image: url({checkmark_url});
+            }}
+            QCheckBox::indicator:hover {{
+                border-color: #4CAF50;
+            }}
+            """
+            self.enable_comment_checkbox.setStyleSheet(checkbox_style)
+        except Exception as e:
+            print(f"设置复选框样式失败: {e}")
+            # 使用不带图标的备用样式
+            self.enable_comment_checkbox.setStyleSheet("""
+            QCheckBox {
+                font-size: 14px;
+                color: #333;
+                spacing: 8px;
             }
             QCheckBox::indicator {
                 width: 18px;
@@ -921,12 +983,11 @@ class WeChatAutomationGUI(QMainWindow):
             QCheckBox::indicator:checked {
                 background-color: #4CAF50;
                 border-color: #4CAF50;
-                image: url(assets/checkmark.svg);
             }
             QCheckBox::indicator:hover {
                 border-color: #4CAF50;
             }
-        """)
+            """)
         self.enable_comment_checkbox.setToolTip("勾选后将在点赞时同时进行评论")
         
         checkbox_layout.addWidget(self.enable_comment_checkbox)
@@ -950,6 +1011,8 @@ class WeChatAutomationGUI(QMainWindow):
         comment_layout.addLayout(comment_text_layout)
         
         layout.addWidget(comment_group)
+        
+        # 窗口设置区域已移动到设置页面
         
         # 操作按钮区域（移到点赞设置外面）
         button_layout = QHBoxLayout()
@@ -999,6 +1062,68 @@ class WeChatAutomationGUI(QMainWindow):
             "配置自动化参数和系统选项"
         )
         layout.addWidget(info_frame)
+        
+        # 朋友圈窗口设置区域
+        window_group = QGroupBox("朋友圈窗口设置")
+        window_group.setFont(QFont("Microsoft YaHei", 10, QFont.Bold))
+        window_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #e0e0e0;
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+                color: #9C27B0;
+            }
+        """)
+        
+        window_layout = QVBoxLayout(window_group)
+        window_layout.setSpacing(15)
+        
+        # 朋友圈窗口大小调整选项
+        window_resize_layout = QHBoxLayout()
+        self.enable_window_resize_checkbox = QCheckBox("自动调整朋友圈窗口大小")
+        self.enable_window_resize_checkbox.setFont(QFont("Microsoft YaHei", 10))
+        self.enable_window_resize_checkbox.setChecked(True)  # 默认启用
+        self.enable_window_resize_checkbox.setStyleSheet("""
+            QCheckBox {
+                font-size: 14px;
+                color: #333;
+                spacing: 8px;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
+                border: 2px solid #e0e0e0;
+                border-radius: 3px;
+                background-color: white;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #9C27B0;
+                border-color: #9C27B0;
+            }
+            QCheckBox::indicator:hover {
+                border-color: #9C27B0;
+            }
+        """)
+        self.enable_window_resize_checkbox.setToolTip("勾选后将自动调整朋友圈窗口高度为屏幕高度的100%，便于查看更多内容")
+        
+        window_resize_layout.addWidget(self.enable_window_resize_checkbox)
+        window_resize_layout.addStretch()
+        window_layout.addLayout(window_resize_layout)
+        
+        # 窗口大小说明
+        window_info_label = QLabel("• 启用后朋友圈窗口将自动调整为屏幕高度的100%\n• 窗口将靠左显示，便于查看更多朋友圈内容")
+        window_info_label.setFont(QFont("Microsoft YaHei", 9))
+        window_info_label.setStyleSheet("color: #666666; padding-left: 25px;")
+        window_layout.addWidget(window_info_label)
+        
+        layout.addWidget(window_group)
         
         # 设置区域
         settings_group = QGroupBox("说明")
@@ -1444,6 +1569,9 @@ class WeChatAutomationGUI(QMainWindow):
         enable_comment = self.enable_comment_checkbox.isChecked()
         comment_text = self.comment_text_input.text().strip() if enable_comment else ""
         
+        # 获取窗口调整设置（从设置页面获取）
+        enable_window_resize = self.enable_window_resize_checkbox.isChecked()
+        
         # 验证评论设置
         if enable_comment and not comment_text:
             QMessageBox.warning(self, "设置错误", "已启用评论功能但未输入评论内容！")
@@ -1484,7 +1612,26 @@ class WeChatAutomationGUI(QMainWindow):
                     self.update_status("❌ 打开朋友圈失败", "#f44336")
                     return
                 
-                self.update_status("✅ 朋友圈已打开，开始点赞操作", "#4CAF50")
+                self.update_status("✅ 朋友圈已打开", "#4CAF50")
+                
+                # 如果启用了窗口大小调整，则调整朋友圈窗口大小
+                if enable_window_resize:
+                    self.update_status("🔧 正在调整朋友圈窗口大小...", "#FF9800")
+                    try:
+                        from wechat_core_engine import get_pengyouquan_window_region
+                        # 通过get_pengyouquan_window_region函数来触发窗口调整
+                        pengyouquan_region = get_pengyouquan_window_region(
+                            stop_flag_func=lambda: self._stop_moments, 
+                            enable_window_resize=True
+                        )
+                        if pengyouquan_region:
+                            self.update_status("✅ 朋友圈窗口大小已调整", "#4CAF50")
+                        else:
+                            self.update_status("⚠️ 朋友圈窗口大小调整失败，继续执行", "#FF9800")
+                    except Exception as resize_error:
+                        self.update_status(f"⚠️ 窗口调整出错: {resize_error}，继续执行", "#FF9800")
+                
+                self.update_status("👍 开始点赞操作", "#4CAF50")
                 import time
                 #time.sleep(3)  # 等待朋友圈加载
                 
@@ -1636,6 +1783,9 @@ class WeChatAutomationGUI(QMainWindow):
             # 连接复选框的变化信号
             if hasattr(self, 'enable_comment_checkbox'):
                 self.enable_comment_checkbox.stateChanged.connect(self.save_last_inputs)
+            
+            if hasattr(self, 'enable_window_resize_checkbox'):
+                self.enable_window_resize_checkbox.stateChanged.connect(self.save_last_inputs)
                 
         except Exception as e:
             print(f"连接自动保存信号失败: {e}")
@@ -1712,6 +1862,10 @@ class WeChatAutomationGUI(QMainWindow):
             
             if hasattr(self, 'comment_text_input'):
                 config['last_inputs']['comment_text'] = self.comment_text_input.text()
+            
+            # 保存窗口大小调整选项
+            if hasattr(self, 'enable_window_resize_checkbox'):
+                config['last_inputs']['enable_window_resize'] = self.enable_window_resize_checkbox.isChecked()
             
             # 写入配置文件
             with open(config_file, 'w', encoding='utf-8') as f:
@@ -1859,6 +2013,10 @@ class WeChatAutomationGUI(QMainWindow):
             
             if hasattr(self, 'comment_text_input') and last_inputs.get('comment_text'):
                 self.comment_text_input.setText(last_inputs['comment_text'])
+            
+            # 恢复窗口大小调整选项
+            if hasattr(self, 'enable_window_resize_checkbox') and 'enable_window_resize' in last_inputs:
+                self.enable_window_resize_checkbox.setChecked(last_inputs['enable_window_resize'])
                 
         except Exception as e:
             print(f"加载输入内容失败: {e}")
