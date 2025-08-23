@@ -1,0 +1,13 @@
+{
+  "wechat_path": "C:\\Program Files\\Tencent\\Weixin\\Weixin.exe",
+  "last_inputs": {
+    "message_content": "人单独",
+    "contact_names": "哈哈哈,路过的人",
+    "group_names": "什么故事,测试一下",
+    "is_contact": false,
+    "moments_names": "哈哈,路过的人",
+    "wait_minutes": 2,
+    "enable_comment": true,
+    "comment_text": "不错,真棒"
+  }
+}
