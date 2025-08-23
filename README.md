@@ -1,11 +1,8 @@
 # 微信自动化工具 (WeChat Automation Tool)
 
 一个基于 Python 和 PyQt5 的微信自动化工具，支持朋友圈点赞、群发消息等功能。
-<img width="990" height="891" alt="image" src="https://github.com/user-attachments/assets/d157fffa-9e6c-4d17-b81e-bb26450aa0c8" />
-<img width="993" height="894" alt="image" src="https://github.com/user-attachments/assets/249c6263-9a36-46e6-8a0f-18d1413ca8d9" />
-
-
-
+<img width="490" height="391" alt="image" src="https://github.com/user-attachments/assets/d157fffa-9e6c-4d17-b81e-bb26450aa0c8" /></br>
+<img width="493" height="394" alt="image" src="https://github.com/user-attachments/assets/249c6263-9a36-46e6-8a0f-18d1413ca8d9" />
 
 ## ✨ 功能特性
 
