@@ -10,6 +10,7 @@ a = Analysis(
         ('wechat_automation_gui.py', '.'),
         ('wechat_core_engine.py', '.'),
         ('requirements.txt', '.'),
+        ('assets', 'assets'),  # 添加assets目录，包含朋友圈功能所需的图像文件
         ('C:\\Users\\zhao\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rapidocr_onnxruntime\\config.yaml', 'rapidocr_onnxruntime'),
         ('C:\\Users\\zhao\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rapidocr_onnxruntime\\models', 'rapidocr_onnxruntime/models'),
         ('C:\\Users\\zhao\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rapidocr_onnxruntime\\ch_ppocr_det', 'rapidocr_onnxruntime/ch_ppocr_det'),
