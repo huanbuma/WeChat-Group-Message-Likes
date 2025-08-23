@@ -35,8 +35,8 @@
 
 1. **克隆项目**
    ```bash
-   git clone https://github.com/your-username/wechat-automation-tool.git
-   cd wechat-automation-tool
+   git clone https://github.com/huanbuma/WeChat-Group-Message-Likes.git
+   cd WeChat-Group-Message-Likes
    ```
 
 2. **安装依赖**
